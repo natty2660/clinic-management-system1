@@ -18,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
-  bool _showDirectory = false;
 
   @override
   void dispose() {
@@ -56,17 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _fillCredentials(User user) {
-    setState(() {
-      _usernameController.text = user.username;
-      _passwordController.text = user.password;
-      _errorMessage = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final allUsers = ApiService().getAllUsers();
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A), // Dark Slate Background
@@ -303,77 +293,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                       ),
-                      const SizedBox(height: 20),
-
-                      // Quick Directory Helper
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _showDirectory = !_showDirectory;
-                          });
-                        },
-                        icon: Icon(
-                          _showDirectory ? Icons.keyboard_arrow_up : Icons.help_outline_rounded,
-                          size: 16,
-                          color: const Color(0xFF14B8A6),
-                        ),
-                        label: Text(
-                          _showDirectory ? 'Hide Staff Directory' : 'Show Staff Directory & Password Guide',
-                          style: const TextStyle(
-                            color: Color(0xFF14B8A6),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-
-                      if (_showDirectory) ...[
-                        const Divider(color: Color(0xFF334155)),
-                        const Text(
-                          'Tap to prefill username & unique password:',
-                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontStyle: FontStyle.italic),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          constraints: const BoxConstraints(maxHeight: 180),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF334155)),
-                          ),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: allUsers.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFF1E293B)),
-                            itemBuilder: (context, index) {
-                              final u = allUsers[index];
-                              return ListTile(
-                                dense: true,
-                                title: Text(
-                                  u.name,
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(
-                                  'user: ${u.username} | pwd: ${u.password}',
-                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontFamily: 'monospace'),
-                                ),
-                                trailing: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E293B),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    u.role.name.toUpperCase(),
-                                    style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 9, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                onTap: () => _fillCredentials(u),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
