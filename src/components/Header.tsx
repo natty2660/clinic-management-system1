@@ -6,6 +6,8 @@ import {
   VolumeX,
   Clock,
   Shield,
+  ShieldCheck,
+  Building2,
   Stethoscope,
   Receipt,
   FlaskConical,
@@ -222,35 +224,65 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Main Workstation Navigation Bar */}
       <div className="px-4 py-2 flex flex-col md:flex-row items-center justify-between gap-3">
-        {/* Workstation Buttons */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden xl:inline mr-1">
-            SPEED Modules:
-          </span>
-          {workstations.map((st) => {
-            const isActive = currentRole === st.role;
-            return (
-              <button
-                key={st.role}
-                onClick={() => {
-                  onRoleChange(st.role);
-                  const matchingUser = allUsers.find((u) => u.role === st.role);
-                  if (matchingUser) {
-                    onUserChange(matchingUser);
-                  }
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
-                  isActive
-                    ? 'bg-teal-500 text-slate-950 shadow-sm font-bold scale-[1.02]'
-                    : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <span>{st.icon}</span>
-                <span>{st.stationName}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Dedicated Station Identity (Strict Role Lock) */}
+        {currentUser.role !== 'admin' ? (
+          <div className="flex items-center gap-3 flex-wrap">
+            {(() => {
+              const currentStation = workstations.find((st) => st.role === currentRole) || workstations[0];
+              return (
+                <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-800/90 border border-teal-500/40 text-teal-300 shadow-sm">
+                  <span className="p-1.5 rounded-lg bg-teal-500/20 text-teal-400">
+                    {currentStation.icon}
+                  </span>
+                  <div>
+                    <div className="text-xs font-black text-white uppercase tracking-wide flex items-center gap-2">
+                      <span>{currentStation.stationName}</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-950 text-teal-300 border border-teal-600/50">
+                        <ShieldCheck className="w-3 h-3 text-teal-400" />
+                        Dedicated Station
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono">
+                      Terminal PC: {currentWorkstation?.name || 'Local PC'} ({currentWorkstation?.roomOrCounter || 'Counter 1'}) • Department: {currentUser.department}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-slate-400 bg-slate-950/70 px-3 py-1.5 rounded-xl border border-slate-800">
+              <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>
+                Access locked to <strong className="text-white capitalize">{currentUser.role}</strong> station. Other hospital computers restricted.
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* Administrator Oversight Station Switcher */
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              Admin Oversight:
+            </span>
+            {workstations.map((st) => {
+              const isActive = currentRole === st.role;
+              return (
+                <button
+                  key={st.role}
+                  onClick={() => onRoleChange(st.role)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+                    isActive
+                      ? 'bg-amber-500 text-slate-950 shadow-sm font-bold scale-[1.02]'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <span>{st.icon}</span>
+                  <span>{st.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Current Operator Profile */}
         <div className="relative flex items-center gap-2">
@@ -272,54 +304,68 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* User selector dropdown */}
+          {/* Secure Operator Details & Lock Dropdown (No arbitrary user bypass!) */}
           {showUserDropdown && (
-            <div className="absolute right-0 top-12 w-72 bg-slate-800 border border-slate-700 rounded-xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                Switch Staff Operator
-              </div>
-              <div className="space-y-1 mt-1 max-h-72 overflow-y-auto">
-                {allUsers.map((u) => (
-                  <button
-                    key={u.id}
-                    onClick={() => {
-                      onUserChange(u);
-                      onRoleChange(u.role);
-                      setShowUserDropdown(false);
-                    }}
-                    className={`w-full text-left p-2 rounded-lg text-xs flex items-center justify-between transition ${
-                      currentUser.id === u.id
-                        ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                        : 'hover:bg-slate-700 text-slate-200'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-semibold">{u.name}</div>
-                      <div className="text-[10px] text-slate-400 capitalize">
-                        {u.role} ({u.department})
-                      </div>
-                    </div>
-                    {currentUser.id === u.id && (
-                      <UserCheck className="w-4 h-4 text-teal-400" />
-                    )}
-                  </button>
-                ))}
+            <div className="absolute right-0 top-12 w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
+                <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 text-sm font-black uppercase">
+                  {currentUser.name.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-white text-sm truncate">{currentUser.name}</div>
+                  <div className="text-[11px] text-teal-400 font-mono">@{currentUser.username}</div>
+                  <div className="text-[10px] text-slate-400 truncate">{currentUser.department}</div>
+                </div>
               </div>
 
-              {onLogout && (
-                <div className="pt-2 mt-2 border-t border-slate-700/80">
+              <div className="my-3 space-y-2 bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-[11px]">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Assigned Role:</span>
+                  <span className="font-bold text-teal-300 uppercase">{currentUser.role}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Station Terminal:</span>
+                  <span className="font-mono text-slate-200">{currentWorkstation?.id || 'WS-LOCAL'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Session Security:</span>
+                  <span className="text-emerald-400 font-medium flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Station Locked
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => {
+                    setShowUserDropdown(false);
+                    onLockScreen?.();
+                  }}
+                  className="w-full text-left p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white flex items-center gap-2.5 transition font-semibold"
+                >
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <div className="flex-1">
+                    <div>Lock Screen</div>
+                    <div className="text-[10px] text-slate-400 font-normal">Require PIN or password to resume session</div>
+                  </div>
+                </button>
+
+                {onLogout && (
                   <button
                     onClick={() => {
                       setShowUserDropdown(false);
                       onLogout();
                     }}
-                    className="w-full text-left p-2 rounded-lg text-xs flex items-center gap-2 text-red-400 hover:bg-red-950/40 hover:text-red-300 transition font-bold"
+                    className="w-full text-left p-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/50 text-red-200 hover:text-white flex items-center gap-2.5 transition font-semibold"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign Out & Lock Software</span>
+                    <LogOut className="w-4 h-4 text-red-400" />
+                    <div className="flex-1">
+                      <div className="font-bold">Sign Out / Switch Operator</div>
+                      <div className="text-[10px] text-red-300 font-normal">Next staff member must enter their own password</div>
+                    </div>
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>

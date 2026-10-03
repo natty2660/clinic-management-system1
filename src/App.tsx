@@ -54,8 +54,14 @@ export function App() {
     return defaultUser;
   });
 
-  // Multi-desktop workstation configuration
+  // Multi-desktop workstation configuration (persisted per physical computer)
   const [currentWorkstation, setCurrentWorkstation] = useState<WorkstationConfig>(() => {
+    const savedId = localStorage.getItem('speed_terminal_workstation_id');
+    const all = db.workstations || INITIAL_WORKSTATIONS;
+    if (savedId) {
+      const found = all.find((w) => w.id === savedId);
+      if (found) return found;
+    }
     return (
       (db.workstations && db.workstations[0]) ||
       INITIAL_WORKSTATIONS[0]
@@ -253,12 +259,27 @@ export function App() {
     }
   };
 
+  const handleRoleChange = (newRole: Role) => {
+    if (currentUser.role !== 'admin') {
+      return; // Regular staff are strictly locked to their own station
+    }
+    setCurrentRole(newRole);
+  };
+
   const handleUserLogin = (authenticatedUser: User) => {
     setCurrentUser(authenticatedUser);
     setCurrentRole(authenticatedUser.role);
     setIsAuthenticated(true);
     setIsScreenLocked(false);
     lastActivityRef.current = Date.now();
+
+    // Bind terminal workstation to user's assigned role
+    const allWs = db.workstations || INITIAL_WORKSTATIONS;
+    const matchingWs = allWs.find((w) => w.role === authenticatedUser.role);
+    if (matchingWs) {
+      setCurrentWorkstation(matchingWs);
+      localStorage.setItem('speed_terminal_workstation_id', matchingWs.id);
+    }
 
     handleBroadcast(
       'USER_LOGIN',
@@ -287,16 +308,21 @@ export function App() {
         onLogin={handleUserLogin}
         clinicName={db.settings.clinicName}
         tagline={db.settings.tagline}
+        workstation={currentWorkstation}
       />
     );
   }
+
+  // Strict Role-Based Access Control Gate:
+  // Regular staff can ONLY access their own station. Only 'admin' role can switch station view for IT oversight.
+  const effectiveRole: Role = currentUser.role === 'admin' ? currentRole : currentUser.role;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-800">
       {/* Top Clinic Header & Workstation Switcher */}
       <Header
-        currentRole={currentRole}
-        onRoleChange={setCurrentRole}
+        currentRole={effectiveRole}
+        onRoleChange={handleRoleChange}
         currentUser={currentUser}
         onUserChange={setCurrentUser}
         allUsers={db.users}
@@ -310,12 +336,7 @@ export function App() {
       {/* Real-time Cross-Station Status Exchange HUD */}
       <StatusExchangeBar
         db={db}
-        currentRole={currentRole}
-        onSwitchWorkstation={(newRole) => {
-          setCurrentRole(newRole);
-          const u = db.users.find((user) => user.role === newRole);
-          if (u) setCurrentUser(u);
-        }}
+        currentRole={effectiveRole}
       />
 
       {/* Network Alert Banner if Intermittent or Severed */}
@@ -349,7 +370,7 @@ export function App() {
 
       {/* Main Workstation Screen View */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
-        {currentRole === 'cashier' && (
+        {effectiveRole === 'cashier' && (
           <CashierModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -360,7 +381,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'doctor' && (
+        {effectiveRole === 'doctor' && (
           <DoctorModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -370,7 +391,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'nurse' && (
+        {effectiveRole === 'nurse' && (
           <NurseModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -380,7 +401,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'laboratory' && (
+        {effectiveRole === 'laboratory' && (
           <LaboratoryModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -391,7 +412,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'pharmacy' && (
+        {effectiveRole === 'pharmacy' && (
           <PharmacyModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -402,7 +423,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'ultrasound' && (
+        {effectiveRole === 'ultrasound' && (
           <UltrasoundModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -413,7 +434,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'xray' && (
+        {effectiveRole === 'xray' && (
           <XRayModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -423,7 +444,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'pathology' && (
+        {effectiveRole === 'pathology' && (
           <PathologyModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -433,7 +454,7 @@ export function App() {
           />
         )}
 
-        {currentRole === 'admin' && (
+        {effectiveRole === 'admin' && (
           <AdminModule
             db={db}
             onUpdateDb={handleUpdateDb}
@@ -518,6 +539,7 @@ export function App() {
         allWorkstations={db.workstations || INITIAL_WORKSTATIONS}
         onSaveWorkstation={(updated) => {
           setCurrentWorkstation(updated);
+          localStorage.setItem('speed_terminal_workstation_id', updated.id);
           handleUpdateDb((prev) => ({
             ...prev,
             workstations: (prev.workstations || []).map((w) =>
@@ -529,9 +551,10 @@ export function App() {
           const matching = (db.workstations || INITIAL_WORKSTATIONS).find((w) => w.id === stationId);
           if (matching) {
             setCurrentWorkstation(matching);
-            setCurrentRole(matching.role);
-            const user = db.users.find((u) => u.id === matching.assignedOperatorId) || db.users.find((u) => u.role === matching.role);
-            if (user) setCurrentUser(user);
+            localStorage.setItem('speed_terminal_workstation_id', matching.id);
+            if (currentUser.role === 'admin' || currentUser.role === matching.role) {
+              setCurrentRole(matching.role);
+            }
           }
         }}
         onTestPrint={(printerName) => {

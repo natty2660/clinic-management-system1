@@ -23,7 +23,7 @@ import { formatCurrency, getBatchExpiryStatus } from '../utils/formatters';
 interface StatusExchangeBarProps {
   db: DatabaseState;
   currentRole: Role;
-  onSwitchWorkstation: (role: Role) => void;
+  onSwitchWorkstation?: (role: Role) => void;
   onOpenRoadmap?: () => void;
   onOpenChaosLab?: () => void;
   isPhase1Active?: boolean;
@@ -37,7 +37,6 @@ interface StatusExchangeBarProps {
 export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
   db,
   currentRole,
-  onSwitchWorkstation,
 }) => {
   // Cashier metrics
   const unpaidChargesCount = db.charges.filter((c) => c.paymentStatus === 'pending').length;
@@ -89,7 +88,7 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
   return (
     <div className="bg-slate-900/90 border-b border-slate-800 text-slate-300 px-4 py-2 text-xs">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5">
-        {/* Status Exchange HUD Cards */}
+        {/* Status Exchange HUD Cards - Read-Only Live LAN Telemetry */}
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto py-0.5 scrollbar-thin">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-teal-400 uppercase tracking-wider shrink-0 pr-1">
             <Activity className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
@@ -97,12 +96,12 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
           </div>
 
           {/* Cashier pill */}
-          <button
-            onClick={() => onSwitchWorkstation('cashier')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Cashier Desk: Real-time collections and pending balances across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'cashier'
-                ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-emerald-950/70 border-emerald-500/80 text-emerald-200 ring-1 ring-emerald-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <Receipt className="w-3 h-3 text-emerald-400" />
@@ -113,15 +112,15 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
                 {unpaidChargesCount} pending
               </span>
             )}
-          </button>
+          </div>
 
           {/* Doctor pill */}
-          <button
-            onClick={() => onSwitchWorkstation('doctor')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Doctor OPD: Live patient queue waiting for consultation across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'doctor'
-                ? 'bg-blue-950/70 border-blue-500/60 text-blue-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-blue-950/70 border-blue-500/80 text-blue-200 ring-1 ring-blue-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <Stethoscope className="w-3 h-3 text-blue-400" />
@@ -132,29 +131,29 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
                 {inConsultCount} in consult
               </span>
             )}
-          </button>
+          </div>
 
           {/* Nurse pill */}
-          <button
-            onClick={() => onSwitchWorkstation('nurse')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Nurse Triage: Patients waiting for vital signs across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'nurse'
-                ? 'bg-purple-950/70 border-purple-500/60 text-purple-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-purple-950/70 border-purple-500/80 text-purple-200 ring-1 ring-purple-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <HeartPulse className="w-3 h-3 text-purple-400" />
             <span>Nurse:</span>
             <span className="font-bold text-white">{waitingNurseCount} triage</span>
-          </button>
+          </div>
 
           {/* Lab pill */}
-          <button
-            onClick={() => onSwitchWorkstation('laboratory')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Laboratory: Active lab orders and specimen collection status across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'laboratory'
-                ? 'bg-amber-950/70 border-amber-500/60 text-amber-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-amber-950/70 border-amber-500/80 text-amber-200 ring-1 ring-amber-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <FlaskConical className="w-3 h-3 text-amber-400" />
@@ -165,15 +164,15 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
                 <Lock className="w-2.5 h-2.5 inline" /> {labBlockedUnpaid} unpaid
               </span>
             )}
-          </button>
+          </div>
 
           {/* Pharmacy pill */}
-          <button
-            onClick={() => onSwitchWorkstation('pharmacy')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Pharmacy: Verified prescriptions ready to dispense across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'pharmacy'
-                ? 'bg-cyan-950/70 border-cyan-500/60 text-cyan-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-cyan-950/70 border-cyan-500/80 text-cyan-200 ring-1 ring-cyan-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <Pill className="w-3 h-3 text-cyan-400" />
@@ -184,15 +183,15 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
                 <Lock className="w-2.5 h-2.5 inline" /> {rxBlockedUnpaid} unpaid
               </span>
             )}
-          </button>
+          </div>
 
           {/* Ultrasound pill */}
-          <button
-            onClick={() => onSwitchWorkstation('ultrasound')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Ultrasound Suite: Imaging scan worklist queue across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'ultrasound'
-                ? 'bg-indigo-950/70 border-indigo-500/60 text-indigo-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-indigo-950/70 border-indigo-500/80 text-indigo-200 ring-1 ring-indigo-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <Radio className="w-3 h-3 text-indigo-400" />
@@ -200,15 +199,15 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
             <span className="font-bold text-white">
               {(db.ultrasoundOrders || []).filter((o) => o.status !== 'completed').length} active
             </span>
-          </button>
+          </div>
 
           {/* X-Ray pill */}
-          <button
-            onClick={() => onSwitchWorkstation('xray')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Digital X-Ray: Radiography study queue across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'xray'
-                ? 'bg-sky-950/70 border-sky-500/60 text-sky-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-sky-950/70 border-sky-500/80 text-sky-200 ring-1 ring-sky-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <ScanLine className="w-3 h-3 text-sky-400" />
@@ -216,15 +215,15 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
             <span className="font-bold text-white">
               {(db.xrayOrders || []).filter((o) => o.status !== 'completed').length} pending
             </span>
-          </button>
+          </div>
 
           {/* Pathology pill */}
-          <button
-            onClick={() => onSwitchWorkstation('pathology')}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition shrink-0 ${
+          <div
+            title="Histopathology: Biopsy specimen queue across LAN"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] font-medium shrink-0 ${
               currentRole === 'pathology'
-                ? 'bg-rose-950/70 border-rose-500/60 text-rose-200'
-                : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 text-slate-300'
+                ? 'bg-rose-950/70 border-rose-500/80 text-rose-200 ring-1 ring-rose-500/40'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-300'
             }`}
           >
             <Microscope className="w-3 h-3 text-pink-400" />
@@ -232,12 +231,13 @@ export const StatusExchangeBar: React.FC<StatusExchangeBarProps> = ({
             <span className="font-bold text-white">
               {(db.pathologyOrders || []).filter((o) => o.status !== 'completed').length} queue
             </span>
-          </button>
+          </div>
         </div>
 
         {/* System Info Tag */}
-        <div className="shrink-0 hidden xl:flex items-center text-[11px] text-slate-400 font-mono">
-          <span>SPEED Hospital Information System</span>
+        <div className="shrink-0 hidden xl:flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>LAN Queue Live Exchange (Read-Only)</span>
         </div>
       </div>
     </div>

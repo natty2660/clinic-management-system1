@@ -8,14 +8,16 @@ import {
   AlertCircle,
   Building2,
   ShieldCheck,
+  Laptop,
 } from 'lucide-react';
-import { User } from '../types/clinic';
+import { User, WorkstationConfig } from '../types/clinic';
 
 interface LoginScreenProps {
   users: User[];
   onLogin: (user: User) => void;
   clinicName?: string;
   tagline?: string;
+  workstation?: WorkstationConfig;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
@@ -23,6 +25,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLogin,
   clinicName = 'SPEED Hospital Information System',
   tagline = 'Secure Clinical Station & Hospital Operating System',
+  workstation,
 }) => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -99,6 +102,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
               <span>Multi-Role Access Control (RBAC) Active</span>
             </div>
+            {workstation && (
+              <div className="mt-2 text-[10px] text-slate-400 font-mono flex items-center justify-center gap-1.5">
+                <Laptop className="w-3 h-3 text-teal-400" />
+                <span>Assigned PC: <strong className="text-white">{workstation.name}</strong> ({workstation.roomOrCounter})</span>
+              </div>
+            )}
           </div>
 
           {/* Form */}
